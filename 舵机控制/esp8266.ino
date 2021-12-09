@@ -7,15 +7,22 @@
 #include <AliyunIoTSDK.h>
 
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
+
+
 #include <aREST.h>
 const char *ssid = "esp8266";
 const char *pwd = "esp82666";
 static WiFiClient espClient;
+const String my_version = "1.06";//版本号，依据这个决定启动时是否需要ota升级
+char* my_Version = "1.06";//避免出错
 aREST rest = aREST();
 #define LISTEN_PORT           80
 WiFiServer server(LISTEN_PORT);
 Thread my_thread1 = Thread();
 Thread my_thread2 = Thread();
+//Thread my_thread3 = Thread();
 #define PRODUCT_KEY "a1J4LfeKtKw"
 #define DEVICE_NAME "Switch1"
 #define DEVICE_SECRET "bb90552fb7a551305383a44665dce6f4"
@@ -105,6 +112,45 @@ void listen_rest(){
 void listen_ota(){
     ArduinoOTA.handle();
 }
+void request_ota_check(){
+  HTTPClient httpClient;
+  httpClient.begin(espClient,"http://ota.dadiqq.cn/switch.txt");
+  int httpcode = httpClient.GET();
+  Serial.println(httpcode);
+  if(httpcode == HTTP_CODE_OK){
+    //接收成功,校验版本
+    String response = httpClient.getString();
+    Serial.println(response);
+    if(response != my_version){
+        //ota升级
+        t_httpUpdate_return ret = ESPhttpUpdate.update(espClient,"ota.dadiqq.cn",80,"/Switch1.bin");
+        while(1){
+          if(ret != HTTP_UPDATE_OK){
+            Serial.println("update fail err -1");
+            //出错了,暂时不管，上报一下就行
+            AliyunIoTSDK::send("update",false);
+            httpClient.end();
+            return;
+          }else{
+            Serial.println("update success");
+            AliyunIoTSDK::send("update",true);
+            httpClient.end();
+            return;
+          }  
+        }
+    }else{
+      Serial.println("is new !");
+      AliyunIoTSDK::send("update",true);//最新版本无需升级
+      httpClient.end();
+      return;
+    }
+  }else{
+    Serial.println("update fail err -2");
+    AliyunIoTSDK::send("update",false);
+    httpClient.end();
+    return;
+  }
+}
 void setup(void){
     Serial.begin(115200);
     wifiInit(ssid, pwd);
@@ -116,9 +162,12 @@ void setup(void){
     server.begin();
     AliyunIoTSDK::begin(espClient, PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET, REGION_ID);
     AliyunIoTSDK::bindData("IsOpen", change_state);
-    AliyunIoTSDK::send("IsOpen", pre);
     AliyunIoTSDK::bindData("ovalue",ovalue_change);
     AliyunIoTSDK::bindData("cvalue",cvalue_change);
+    AliyunIoTSDK::send("FirmwareVersion",my_Version);
+    request_ota_check();
+    //check完成后上报版本号
+    AliyunIoTSDK::send("FirmwareVersion",my_Version);
     pinMode(0,OUTPUT);
     digitalWrite(0,0);
     for(int i = 0;i<35;i++){
@@ -129,9 +178,10 @@ void setup(void){
     }
     ArduinoOTA.begin();
     my_thread1.onRun(listen_rest);
-    my_thread1.setInterval(1);
+    my_thread1.setInterval(50);
     my_thread2.onRun(listen_ota);
-    my_thread2.setInterval(2);
+    my_thread2.setInterval(50);
+    
 }
 void loop() {
   // Handle REST calls
