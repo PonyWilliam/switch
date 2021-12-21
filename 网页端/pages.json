@@ -14,7 +14,41 @@
                 "enablePullDownRefresh": false
             }
             
-        }
+        },
+		{
+		    "path" : "pages/share/share",
+		    "style" :                                                                                    
+		    {
+		        "navigationBarTitleText": "分 享",
+		        "enablePullDownRefresh": false
+		    }
+		    
+		},
+		{
+		    "path" : "pages/mine/mine",
+		    "style" :                                                                                    
+		    {
+		        "navigationBarTitleText": "我 的",
+		        "enablePullDownRefresh": false
+		    }
+		    
+		},
+		{
+		        "path": "uni_modules/uni-upgrade-center-app/pages/upgrade-popup",
+		        "style": {
+		            "disableScroll": true,
+		            "app-plus": {
+		                "backgroundColorTop": "transparent",
+		                "background": "transparent",
+		                "titleNView": false,
+		                "scrollIndicator": false,
+		                "popGesture": "none",
+		                "animationType": "fade-in",
+		                "animationDuration": 200
+		
+		            }
+		        }
+		}
     ],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",

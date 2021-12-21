@@ -5,7 +5,7 @@
 				<image src="../../static/switch.jpg" mode="aspectFill"></image>
 			</view>
 			<view class="title">{{item.DeviceName}}</view>
-			<view class="subtitle">{{item.Nickname}}</view>
+			<view class="sub_title">{{item.Nickname}}</view>
 			<view class="state">设备状态:{{item.DeviceStatus == "ONLINE" ? "在线" : "离线"}}</view>
 			<view class="switch">
 				<view>
@@ -15,8 +15,8 @@
 			</view>
 			<view class="slider">
 				<text class="title">高级设置(oc最高与最低分别是顺逆时针90°)</text>
-				开力度:<slider :value="ovalue" block-size="20" block-color="#4CD964" min="500" max="1500" show-value="" step="10" backgroundColor="#8080e2" activeColor="orangered" @change="ovalue_change"/>
-				关力度:<slider :value="cvalue" block-size="20" block-color="#4CD964" min="1500" max="2500" show-value="" step="10" backgroundColor="#8080e2" activeColor="orangered" @change="cvalue_change"/>
+				开力度:<slider :value="ovalue" block-size="20" block-color="#4CD964" min="0" max="100" show-value="" step="1" backgroundColor="#8080e2" activeColor="orangered" @change="ovalue_change"/>
+				关力度:<slider :value="cvalue" block-size="20" block-color="#4CD964" min="0" max="100" show-value="" step="1" backgroundColor="#8080e2" activeColor="orangered" @change="cvalue_change"/>
 				<button type="default" class="button" @click="reset_oc">一键复原</button>
 			</view>
 		</view>
@@ -78,7 +78,8 @@
 						"oc":"o"
 					},
 					success:res=>{
-						this.ovalue = res.data.data
+						this.ovalue = (1500 - res.data.data) / 10;
+						console.log(`ovalue:${this.ovalue}`)
 						if(++x>=3){
 							uni.hideLoading()
 						}
@@ -96,7 +97,9 @@
 						"oc":"c"
 					},
 					success:res=>{
-						this.cvalue = res.data.data
+						console.log(res.data.data)
+						this.cvalue = (res.data.data - 1500) / 10;
+						console.log(`cvalue:${this.cvalue}`)
 						if(++x>=3){
 							uni.hideLoading()
 						}
@@ -123,6 +126,7 @@
 				})
 			},
 			ovalue_change(e){
+				console.log(`post o:${1500 - (e.detail.value) * 10}`)
 				uni.request({
 					url:`${back_url}/set/ocvalue`,
 					header:{
@@ -133,7 +137,7 @@
 						"name":this.devices[0].DeviceName,
 						"key":this.devices[0].ProductKey,
 						"oc":"o",
-						"value":e.detail.value
+						"value":1500 - (e.detail.value) * 10
 					},
 					success:res=>{
 						console.log(res)
@@ -141,6 +145,7 @@
 				})
 			},
 			cvalue_change(e){
+				console.log(`post c:${1500 + (e.detail.value) * 10}`)
 				uni.request({
 					url:`${back_url}/set/ocvalue`,
 					header:{
@@ -151,16 +156,17 @@
 						"name":this.devices[0].DeviceName,
 						"key":this.devices[0].ProductKey,
 						"oc":"c",
-						"value":e.detail.value
+						"value":1500 + (e.detail.value) * 10
 					},
 					success:res=>{
+				
 						console.log(res)
 					}
 				})
 			},
 			reset_oc(){
-				this.cvalue = 2000
-				this.ovalue = 1000
+				this.cvalue = 50
+				this.ovalue = 50
 				let c_config = {
 					detail:{
 						value:this.cvalue
@@ -210,8 +216,10 @@
 <style lang="scss">
 .container{
 	width:100%;
+	min-height: 100vh;
+	background:#3F536E;
+	padding-top:15px;
 	.control{
-		margin-top:40px;
 		width:90%;
 		box-sizing: border-box;
 		display: block;
@@ -226,27 +234,27 @@
 				width:100%;
 				height:100%;
 				border-radius: 10px;
-				box-shadow: 2px 4px 3px #C0C0C0;
+				box-shadow: 2px 4px 3px #646464;
 			}
 		}
 		
 		.title{
-			color:#222;
+			color:#f0f0f0;
 			font-size:24px;
-			line-height:80px;
-			
+			line-height:60px;
 		}
 		.sub_title{
-			margin-top:15px;
+			margin-top:5px;
 			font-size:18px;
 			line-height:30px;
-			color:#444;
+			color:#c5c5c5;
 		}
 		.state{
-			margin-top:20px;
+			margin-top:8px;
 			font-size:16px;
 			line-height:30px;
-			color:#676764;
+			color:#080807;
+			margin-bottom:20px;
 		}
 		.slider{
 			margin-top: 30px;
