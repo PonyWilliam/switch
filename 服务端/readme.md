@@ -8,7 +8,7 @@
 ### v1.1（2021年12月19日）
 1. 对直接部署情况下的CORS通过注释给出，如果需要直接绕过CORS请使用。
 2. 可使用mysql连接到数据库，提供用户注册功能。
-3. 衍生自制简单mysql插件，sqld，详细参考[sqld github地址](https://github.com/PonyWilliam/go-sqld)
+3. 衍生自制简单mysql插件，sqld，详细参考[sqld github地址](https://github.com/PonyWilliam/sqld)
 
 ### v1.0
 1. 服务端使用gin开发，简单且并发量较高
