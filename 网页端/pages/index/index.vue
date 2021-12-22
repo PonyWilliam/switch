@@ -233,7 +233,44 @@
 				}
 			}
 		},
-		onLoad:function(){
+		onLoad:async function(){
+			console.log(uni.getStorageSync('token'))
+			let token = uni.getStorageSync('token')
+			if(token == ""){
+				uni.showToast({
+					title:'请先登录',
+					duration:1000,
+					icon:'error'
+				})
+				setTimeout(()=>{
+					uni.redirectTo({
+						url:'../mine/mine'
+					})
+				},1000)
+				return
+			}
+			const [err,res] = await uni.request({
+				url:`${back_url}/user`,
+				method:'GET',
+				header:{
+					"token":token
+				},
+			})
+			if(res.data.code != 200){
+				//登录失效
+				uni.showToast({
+					title:'登录过期，请重新登录',
+					duration:1000,
+					icon:'error'
+				})
+				setTimeout(()=>{
+					uni.removeStorageSync('token')
+					uni.redirectTo({
+						url:'../mine/mine'
+					})
+				},1000)
+				return
+			}
 			uni.showLoading({
 				title:'加载数据中···',
 			})

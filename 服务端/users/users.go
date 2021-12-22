@@ -43,6 +43,7 @@ func Encode(pass string) string {
 }
 
 func FindUser(username string) bool {
+	User = nil
 	_ = Db.Select(&User, "select * from person where username = ?", username)
 	if User != nil {
 		return true

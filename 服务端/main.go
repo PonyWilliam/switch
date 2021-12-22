@@ -14,12 +14,11 @@ func main() {
 	r := gin.Default()
 	// r.Use(cors.New(cors.Config{
 	// 	AllowOriginFunc:  func(origin string) bool { return true },
-	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
+	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 	// 	AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "token"},
 	// 	AllowCredentials: true,
 	// 	MaxAge:           12 * time.Hour,
 	// }))
-	// 通过nginx反向代理绕过CORS
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"code": 200,
@@ -42,7 +41,8 @@ func main() {
 	}
 	group3 := r.Group("/user")
 	{
-		group3.POST("/", routers.JWTAuth(), routers.CheckCode)
+		group3.OPTIONS("/", routers.CheckCode)
+		group3.GET("/", routers.JWTAuth(), routers.CheckCode)
 		group3.POST("/login", routers.Login)
 		group3.POST("/registry", routers.Registry)
 		group3.POST("/apply", routers.GetCode)

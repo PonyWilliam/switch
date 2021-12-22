@@ -40,12 +40,15 @@
 					<view class="input">
 						<input type="number" v-model="checkcode" placeholder="请输入验证码"/>
 					</view>
+					<view class="getCode">
+						<button type="default" @click="getCode">{{codetip}}</button>
+					</view>
 				</view>
 				<view class="registry_tip" @click="go_registry(0)">
 					已又账号？点我登录
 				</view>
 				<view class="submit">
-					<button type="default" @click="registry()">注 册</button>
+					<button type="default" @click="Registry()">注 册</button>
 				</view>
 			</view>
 			<view class="form login" v-show="!registry">
@@ -86,6 +89,14 @@
 
 <script>
 	const configs = require('../../utils/config.js')
+	 function isPoneAvailable(phone) {
+	    var myreg=/^[1][3,4,5,6,7,8,9][0-9]{9}$/;
+	    if (!myreg.test(phone)) {
+	        return false;
+	    } else {
+			return true;
+	    }
+	}
 	export default{
 		data(){
 			return{
@@ -95,6 +106,8 @@
 				registry:0,
 				phone:'',
 				checkcode:'',
+				time:0,
+				codetip:'获取验证码',
 			}
 		},
 		methods:{
@@ -135,7 +148,7 @@
 				}else{
 					//登录，请求后台接口
 					uni.request({
-						url:`${configs.default.backurl}/login`,
+						url:`${configs.default.backurl}/user/login`,
 						data:{
 							"username":this.username,
 							"password":this.password
@@ -148,10 +161,156 @@
 							console.log(res.data)
 							if(res.data.code != 200){
 								//出错，报错
+								uni.showToast({
+									title:res.data.msg,
+									icon:"error",
+									duration:3000,
+								})
+								return
+							}
+							uni.setStorageSync("token",res.data.token)//存储token到storage，后续通过这个作为身份验证
+							if(!this.registry){
+								uni.showToast({
+									title:'登录成功，即将跳转',
+									duration:2000,
+								})
+								setTimeout(()=>{
+									uni.redirectTo({
+										url:'../index/index'
+									})
+								},2000)
+							}else{
+								setTimeout(()=>{
+									uni.redirectTo({
+										url:'../index/index'
+									})
+								},1)
 							}
 						}
 					})
 				}
+			},
+			getCode(){
+				if(!isPoneAvailable(this.phone)){
+					uni.showToast({
+						title:'请输入正确的手机号',
+						icon:'error',
+						duration:2000,
+					})
+					return
+				}
+				if(this.time > 0){
+					uni.showToast({
+						title:'60秒内只能发送一次验证码',
+						icon:'error',
+						duration:2000,
+					})
+					return
+				}
+				//请求发送验证码
+				uni.request({
+					url:`${configs.default.backurl}/user/apply`,
+					data:{
+						"phone":this.phone,
+					},
+					method:"POST",
+					header:{
+						"content-type":"application/x-www-form-urlencoded"
+					},success:res=>{
+						console.log(res.data)
+						if(res.data.code != 200){
+							uni.showToast({
+								title:res.data.msg,
+								icon:'error',
+								duration:2000
+							})
+							return
+						}
+						uni.setStorageSync('phone',this.phone)
+						uni.showToast({
+							title:'验证码发送成功',
+							duration:2000
+						})
+						//启动定时器
+						let that = this
+						that.time = 60
+						let timer = setInterval(()=>{
+							if(--that.time <= 0){
+								that.codetip = '获取验证码'
+								clearInterval(timer)
+							}else{
+								that.codetip = `${that.time}s`
+							}
+						},1000)
+					}
+				})
+			},
+			Registry(){
+				if(this.username.length < 5){
+					uni.showToast({
+						title:'用户名至少需要5位',
+						icon:'error',
+						duration:2000
+					})
+					return
+				}
+				if(this.password.length < 6){
+					uni.showToast({
+						title:'密码至少需要5位',
+						icon:'error',
+						duration:2000
+					})
+					return
+				}
+				if(this.phone.length != 11 || this.phone != uni.getStorageSync('phone')){
+					uni.showToast({
+						title:'手机号错误',
+						icon:'error',
+						duration:2000
+					})
+					return
+				}
+				if(this.checkcode.length != 6){
+					uni.showToast({
+						title:'验证码错误',
+						icon:'error',
+						duration:2000
+					})
+					return
+				}
+				//请求注册
+				uni.request({
+					url:`${configs.default.backurl}/user/registry`,
+					data:{
+						"username":this.username,
+						"password":this.password,
+						"phone":this.phone,
+						"code":this.checkcode,
+					},
+					method:"POST",
+					header:{
+						"content-type":"application/x-www-form-urlencoded"
+					},
+					success:res=>{
+						if(res.data.code != 200){
+							uni.showToast({
+								title:res.data.msg,
+								icon:'error',
+								duration:2000
+							})
+						}
+						return
+						//注册成功
+						uni.showToast({
+							title:'注册成功',
+							duration:1500
+						})
+						let that = this
+						setTimeout(()=>{
+							that.login()
+						},1500)
+					}
+				})
 			},
 			go_registry:function(now){
 				this.registry = now
