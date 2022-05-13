@@ -32,12 +32,16 @@ func main() {
 		group1.POST("/", routers.GetSwitch)
 		group1.POST("/switch", routers.GetSwitch)
 		group1.POST("/ocvalue", routers.GetocValue)
+		//暴露一个通过id进行get的接口
+		group1.GET("/:id", routers.GetByID)
 	}
 	group2 := r.Group("/set")
 	{
 		group2.POST("/", routers.SetSwitch)
 		group2.POST("/switch", routers.SetSwitch)
 		group2.POST("/ocvalue", routers.SetocValue) //0 -> close value 1 -> open value
+		//暴露一个通过id进行set的接口
+		group2.GET("/:id", routers.SetByID)
 	}
 	group3 := r.Group("/user")
 	{

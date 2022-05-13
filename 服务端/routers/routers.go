@@ -289,3 +289,62 @@ func ReflashToken(c *gin.Context) {
 		"token": res,
 	})
 }
+
+//给hyh暴露的2个set、get接口
+func SetByID(c *gin.Context) {
+	key := c.Param("id")
+	name := c.Query("name")
+	val := c.Query("val")
+	err := aliiot.Smart_setDeviceProperty(name, key, "IsOpen", val)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "设置成功",
+	})
+}
+func GetByID(c *gin.Context) {
+	key := c.Param("id")
+	name := c.Query("name")
+	ress := aliiot.Getproperty(name, key)
+	var res string
+	for _, v := range ress {
+		fmt.Println(v)
+		if v.Indentifier == "IsOpen" {
+
+			if v.Value.Data > 1 || v.Value.Data < 0 {
+				res = "-1"
+			} else {
+				if v.Value.Data == 1 {
+					res = "1"
+				} else {
+					res = "0"
+				}
+			}
+		}
+	}
+	if res == "-1" {
+		c.JSON(200, gin.H{
+			"code": 200,
+			"data": -1,
+		})
+		return
+	}
+	fmt.Println("res:" + res)
+	if res == "1" {
+		c.JSON(200, gin.H{
+			"code": 200,
+			"data": 1,
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"code": 200,
+			"data": 0,
+		})
+	}
+}
